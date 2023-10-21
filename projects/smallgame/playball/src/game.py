@@ -1,41 +1,42 @@
 import pygame
-from pygame.locals import *
-from const import *
-from player import *
-from ball import *
-from level import *
-from block import *
+import const
+import player
+import ball
+import level
+import block
+
 
 class Game(object):
     def __init__(self, surface):
         pygame.mixer.init()
         self.surface = surface
         self.Load(1)
-    
+
     def Load(self, lv):
-        self.level = Level(lv)
+        self.level = level.Level(lv)
         self.isGameOver = False
         self.balls = []
         self.loadPlayer()
-        self.loadOneBall(self.player.GetRect().x, self.player.GetRect().y - SPRITE_SIZE_H - 5, 1, -1)
+        self.loadOneBall(self.player.GetRect().x, self.player.GetRect().y - const.SPRITE_SIZE_H - 5, 1, -1)
         self.loadBlockImages()
-    
+
     def loadPlayer(self):
-        self.player = Player(
-            PLAYER_RES, 
-            (GAME_SIZE[0] - PLAYER_SIZE_W)/2, GAME_SIZE[1] - PLAYER_SIZE_H, 
-            SPRITE_SIZE_W, GAME_SIZE[0] - PLAYER_SIZE_W - SPRITE_SIZE_W)
-    
+        self.player = player.Player(
+            const.PLAYER_RES, (const.GAME_SIZE[0] - const.PLAYER_SIZE_W) / 2,
+            const.GAME_SIZE[1] - const.PLAYER_SIZE_H, const.SPRITE_SIZE_W,
+            const.GAME_SIZE[0] - const.PLAYER_SIZE_W - const.SPRITE_SIZE_W
+        )
+
     def loadOneBall(self, x, y, dirX, dirY):
-        ball = Ball(BALL_RES, x, y, dirX, dirY)
-        self.balls.append(ball)
+        tempBall = ball.Ball(const.BALL_RES, x, y, dirX, dirY)
+        self.balls.append(tempBall)
 
     def loadBlockImages(self):
         self.blocks = []
-        for block in self.level.GetBlocks():
-            sp = Block(block[2], block[0], block[1], (0, 0))
+        for tmpBlock in self.level.GetBlocks():
+            sp = block.Block(tmpBlock[2], tmpBlock[0], tmpBlock[1], (0, 0))
             self.blocks.append(sp)
-    
+
     def update(self):
         if self.isGameOver:
             return
@@ -43,41 +44,40 @@ class Game(object):
         [ball.update() for ball in self.balls]
         self.checkCollide()
         if self.isGameWin():
-            self.Load( self.level.level + 1 )
+            self.Load(self.level.level + 1)
 
-    def draw(self):
+    def draw(self) -> None:
         if self.isGameOver:
-            img = pygame.image.load(GAME_OVER_RES)
+            img = pygame.image.load(const.GAME_OVER_RES)
             self.surface.blit(img, img.get_rect())
-            return 
-        self.player.draw(self.surface)
-        [block.draw(self.surface) for block in self.blocks]
-        [ball.draw(self.surface) for ball in self.balls]
-
+        else:
+            self.player.draw(self.surface)
+            [block.draw(self.surface) for block in self.blocks]
+            [ball.draw(self.surface) for ball in self.balls]
 
     def checkBallBlockCollide(self):
-        for ball in self.balls:
-            for block in self.blocks:
-                if ball.GetRect().colliderect( block.GetRect() ):
-                    ball.changeDirection( block.GetRect() )
-                    self.processBlock(ball, block)
+        for tempBall in self.balls:
+            for tempBlock in self.blocks:
+                if tempBall.GetRect().colliderect(tempBlock.GetRect()):
+                    tempBall.changeDirection(tempBlock.GetRect())
+                    self.processBlock(tempBall, tempBlock)
                     break
 
-    def processBlock(self, ball, block):
-        if block.GetBlockType() == BlockType.COPY:
+    def processBlock(self, ball, tmpBlock):
+        if tmpBlock.GetBlockType() == const.BlockType.COPY:
             self.copyBalls()
-        if block.GetBlockType() == BlockType.SPEED_UP:
+        if tmpBlock.GetBlockType() == const.BlockType.SPEED_UP:
             ball.SetSpeed(1.5)
-        if block.GetBlockType() == BlockType.SPEED_DOWN:
+        if tmpBlock.GetBlockType() == const.BlockType.SPEED_DOWN:
             ball.SetSpeed(0.2)
-        if block.GetBlockType() == BlockType.WALL:
+        if tmpBlock.GetBlockType() == const.BlockType.WALL:
             return
-        self.blocks.remove(block)
- 
+        self.blocks.remove(tmpBlock)
+
     def checkBallPlayerCollide(self):
-        for ball in self.balls:
-            if ball.GetRect().colliderect( self.player.GetRect() ):
-                ball.changeYDirection( self.player.GetRect() )
+        for tmpBall in self.balls:
+            if tmpBall.GetRect().colliderect(self.player.GetRect()):
+                tmpBall.changeYDirection(self.player.GetRect())
                 break
 
     def checkCollide(self):
@@ -87,21 +87,21 @@ class Game(object):
         flag = True
         while flag:
             flag = False
-            for ball in self.balls:
-                if ball.GetRect().y > GAME_SIZE[1]:
-                    self.balls.remove(ball)
+            for tmpBall in self.balls:
+                if tmpBall.GetRect().y > const.GAME_SIZE[1]:
+                    self.balls.remove(tmpBall)
                     flag = True
                     break
         if len(self.balls) == 0:
             self.isGameOver = True
-    
+
     def copyBalls(self):
         balls = [ball for ball in self.balls]
-        for ball in balls:
-            self.loadOneBall(ball.GetRect().x, ball.GetRect().y, 1, -1)
+        for b in balls:
+            self.loadOneBall(b.GetRect().x, b.GetRect().y, 1, -1)
 
     def isGameWin(self):
-        for block in self.blocks:
-            if block.GetBlockType() != BlockType.WALL:
+        for tmpBlock in self.blocks:
+            if tmpBlock.GetBlockType() != const.BlockType.WALL:
                 return False
         return True
